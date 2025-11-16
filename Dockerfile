@@ -1,7 +1,16 @@
-FROM docker.io/eclipse-temurin:21-jdk
-
+# === Stage 1: Build the application ===
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
-COPY target/*.jar /app/eventmaster.jar
+COPY pom.xml .
+COPY src ./src
 
-ENTRYPOINT ["java", "-jar", "eventmaster.jar"]
+RUN mvn -B package -DskipTests
+
+# === Stage 2: Run the application ===
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
