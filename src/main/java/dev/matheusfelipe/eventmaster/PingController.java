@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 
 @RestController
-@RequestMapping("/ping")
+@RequestMapping("/")
 public class PingController {
     
     @GetMapping
