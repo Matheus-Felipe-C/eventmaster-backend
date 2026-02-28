@@ -31,9 +31,9 @@ COPY --from=composer /app /var/www
 # Nginx config
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
-RUN chown -R www-data:www-data /var/www \
-    && mkdir -p /run/nginx
+RUN mkdir -p /run/nginx /var/lib/nginx/tmp \
+    && chown -R www-data:www-data /var/www
 
 EXPOSE 8080
 
-CMD sh -c "php-fpm -D && nginx -g 'daemon off;'"
+CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
