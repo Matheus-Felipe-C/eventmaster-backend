@@ -20,7 +20,7 @@ class EventCategoryController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => __('The given data was invalid.'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -28,7 +28,7 @@ class EventCategoryController extends Controller
         $category = EventCategory::create($validator->validated());
 
         return response()->json([
-            'message' => 'Event category created successfully.',
+            'message' => __('Event category created successfully.'),
             'event_category' => [
                 'id' => $category->id,
                 'name' => $category->name,

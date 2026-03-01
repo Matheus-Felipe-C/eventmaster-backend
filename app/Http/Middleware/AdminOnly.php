@@ -16,7 +16,7 @@ class AdminOnly
     public function handle(Request $request, Closure $next): Response
     {
         if (!auth()->user()->isAdmin()) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
+            return response()->json(['message' => __('Unauthorized.')], 403);
         }
         
         return $next($request);

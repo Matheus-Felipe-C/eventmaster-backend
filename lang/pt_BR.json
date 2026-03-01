@@ -1,0 +1,15 @@
+{
+    "The given data was invalid.": "Os dados fornecidos são inválidos.",
+    "User registered successfully.": "Usuário cadastrado com sucesso.",
+    "Login successful.": "Login realizado com sucesso.",
+    "Invalid credentials.": "Credenciais inválidas.",
+    "Successfully signed off.": "Deslogado com sucesso.",
+    "Unauthenticated.": "Não autenticado.",
+    "Unauthorized.": "Não autorizado.",
+    "Record not found.": "Registro não encontrado.",
+    "Event created successfully.": "Evento criado com sucesso.",
+    "Event category created successfully.": "Categoria de evento criada com sucesso.",
+    "Local created successfully.": "Local criado com sucesso.",
+    "An email with instructions on how to reset your password has been sent.": "Um e-mail com instruções para redefinir sua senha foi enviado.",
+    "Your password has been successfully reset.": "Sua senha foi redefinida com sucesso."
+}

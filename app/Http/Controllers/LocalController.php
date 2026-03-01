@@ -24,7 +24,7 @@ class LocalController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => __('The given data was invalid.'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -32,7 +32,7 @@ class LocalController extends Controller
         $local = Local::create($validator->validated());
 
         return response()->json([
-            'message' => 'Local created successfully.',
+            'message' => __('Local created successfully.'),
             'local' => [
                 'id' => $local->id,
                 'name' => $local->name,

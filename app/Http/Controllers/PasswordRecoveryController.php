@@ -18,7 +18,7 @@ class PasswordRecoveryController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => __('The given data was invalid.'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -34,7 +34,7 @@ class PasswordRecoveryController extends Controller
         }
 
         return response()->json([
-            'message' => 'An email with instructions on how to reset your password has been sent.',
+            'message' => __('An email with instructions on how to reset your password has been sent.'),
         ], 200);
     }
 }

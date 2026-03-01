@@ -75,7 +75,7 @@ class EventController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => __('The given data was invalid.'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -85,7 +85,7 @@ class EventController extends Controller
         $event->load(['category', 'local']);
 
         return response()->json([
-            'message' => 'Event created successfully.',
+            'message' => __('Event created successfully.'),
             'event' => [
                 'id' => $event->id,
                 'id_category' => $event->id_category,
