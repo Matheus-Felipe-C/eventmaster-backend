@@ -8,6 +8,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\LocalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\AdminOnly;
+use App\Http\Controllers\UserController;
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -19,6 +21,13 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 Route::get('/events/{id}', [EventController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Admin routes
+    Route::middleware(AdminOnly::class)->group(function () {
+        Route::apiResource('/users', UserController::class);
+    });
+
+
+    // Normal user routes
     Route::get('/user', function (Request $request) {
         return $request->user();
     });

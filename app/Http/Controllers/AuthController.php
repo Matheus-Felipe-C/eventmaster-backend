@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Role;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -15,22 +17,30 @@ class AuthController extends Controller
      */
     public function signup(Request $request): JsonResponse
     {
+        
         $validator = Validator::make($request->all(), [
-            'id_role' => ['required', 'integer', 'exists:roles,id'],
             'name' => ['required', 'string', 'max:255'],
             'cpf' => ['required', 'string', 'max:14', 'unique:users,cpf'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
-
+        
         if ($validator->fails()) {
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => $validator->errors(),
             ], 422);
         }
-
-        $user = User::create($validator->validated());
+        
+        $defaultRole = Role::where('name', 'user')->first();
+        
+        $user = User::create([
+            'id_role' => $defaultRole->id,
+            'name' => $request->name,
+            'cpf' => $request->cpf,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
 
         return response()->json([
             'message' => 'User registered successfully.',
