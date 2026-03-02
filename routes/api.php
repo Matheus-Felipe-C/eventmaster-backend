@@ -23,14 +23,11 @@ Route::get('/events/{id}', [EventController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     // Admin routes
     Route::middleware(AdminOnly::class)->group(function () {
-        Route::apiResource('/users', UserController::class);
-    });
-
+        Route::get('/users', [UserController::class, 'index']);
+        Route::patch('/users/{user}/role', [UserController::class, 'updateRole']);
+    }); 
 
     // Normal user routes
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::apiResource('/events', EventController::class)->only(['store']);

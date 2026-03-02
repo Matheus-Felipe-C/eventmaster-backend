@@ -11,5 +11,12 @@
     "Event category created successfully.": "Categoria de evento criada com sucesso.",
     "Local created successfully.": "Local criado com sucesso.",
     "An email with instructions on how to reset your password has been sent.": "Um e-mail com instruções para redefinir sua senha foi enviado.",
-    "Your password has been successfully reset.": "Sua senha foi redefinida com sucesso."
+    "Your password has been successfully reset.": "Sua senha foi redefinida com sucesso.",
+    "Organizer role not configured.": "Papel de organizador não está configurado.",
+    "User role not configured.": "Papel de usuário não está configurado.",
+    "User promoted to organizer successfully.": "Usuário promovido a organizador com sucesso.",
+    "User demoted from organizer successfully.": "Usuário rebaixado de organizador com sucesso.",
+    "Organizer user created successfully.": "Usuário organizador criado com sucesso.",
+    "User role updated successfully.": "Papel do usuário atualizado com sucesso.",
+    "Role not found.": "Papel não encontrado."
 }
