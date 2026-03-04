@@ -44,12 +44,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Organizer routes
     Route::middleware(OrganizerOnly::class)->group(function () {
-        Route::apiResource('/events', EventController::class);
+        Route::apiResource('/events', EventController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('/locals', LocalController::class)->only(['store']);
+        Route::apiResource('/event-categories', EventCategoryController::class)->only(['store']);
     });
 
     // Normal user routes
     Route::post('/logout', [AuthController::class, 'logout']);
-
-    Route::apiResource('/locals', LocalController::class);
-    Route::apiResource('/event-categories', EventCategoryController::class);
+    
 });
