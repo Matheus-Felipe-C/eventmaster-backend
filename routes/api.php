@@ -60,4 +60,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/cart', CartController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['cart' => 'cartItem']);
+        
 });
