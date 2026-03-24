@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
@@ -44,6 +46,7 @@ class EventController extends Controller
             'id_local' => ['required', 'integer', 'exists:locals,id'],
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
+            'banner_image' => ['nullable', 'image', 'max:5120'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
             'max_tickets_per_cpf' => ['required', 'integer', 'min:0'],
@@ -56,7 +59,18 @@ class EventController extends Controller
             ], 422);
         }
 
-        $event = Event::create($validator->validated());
+        $eventData = $validator->validated();
+        unset($eventData['banner_image']);
+
+        if ($request->hasFile('banner_image')) {
+            $bannerImage = $request->file('banner_image');
+            $bannerPath = 'events/banners/'.Str::uuid().'.'.$bannerImage->getClientOriginalExtension();
+
+            Storage::disk('supabase')->put($bannerPath, $bannerImage->getContent(), 'public');
+            $eventData['banner_image_url'] = Storage::disk('supabase')->url($bannerPath);
+        }
+
+        $event = Event::create($eventData);
 
         $event->load(['category', 'local']);
 
@@ -76,6 +90,7 @@ class EventController extends Controller
             'id_local' => ['sometimes', 'integer', 'exists:locals,id'],
             'name' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'string'],
+            'banner_image' => ['sometimes', 'nullable', 'image', 'max:5120'],
             'date' => ['sometimes', 'date'],
             'time' => ['sometimes', 'date_format:H:i'],
             'max_tickets_per_cpf' => ['sometimes', 'integer', 'min:0'],
@@ -88,7 +103,18 @@ class EventController extends Controller
             ], 422);
         }
 
-        $event->update($validator->validated());
+        $eventData = $validator->validated();
+        unset($eventData['banner_image']);
+
+        if ($request->hasFile('banner_image')) {
+            $bannerImage = $request->file('banner_image');
+            $bannerPath = 'events/banners/'.Str::uuid().'.'.$bannerImage->getClientOriginalExtension();
+
+            Storage::disk('supabase')->put($bannerPath, $bannerImage->getContent(), 'public');
+            $eventData['banner_image_url'] = Storage::disk('supabase')->url($bannerPath);
+        }
+
+        $event->update($eventData);
         $event->load(['category', 'local']);
 
         return response()->json([
@@ -122,6 +148,7 @@ class EventController extends Controller
             'id_local' => $event->id_local,
             'name' => $event->name,
             'description' => $event->description,
+            'banner_image_url' => $event->banner_image_url,
             'date' => $event->date->format('Y-m-d'),
             'time' => $event->time,
             'max_tickets_per_cpf' => $event->max_tickets_per_cpf,

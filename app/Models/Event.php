@@ -17,6 +17,7 @@ class Event extends Model
         'id_local',
         'name',
         'description',
+        'banner_image_url',
         'date',
         'time',
         'max_tickets_per_cpf',
