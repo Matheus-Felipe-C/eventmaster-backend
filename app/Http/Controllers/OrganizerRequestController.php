@@ -21,8 +21,8 @@ class OrganizerRequestController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'cpf' => ['required', 'string', 'max:14', 'unique:organizer_requests,cpf', 'unique:users,cpf'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:organizer_requests,email', 'unique:users,email'],
+            'cpf' => ['required', 'string', 'max:14', 'unique:organizer_requests,cpf'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:organizer_requests,email'],
             'phone_number' => ['nullable', 'string', 'max:32'],
             'reason' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -68,7 +68,7 @@ class OrganizerRequestController extends Controller
 
     /**
      * Approve an organizer request (admin).
-     * Creates a new user with the organizer role using the request's person data and a random password.
+     * If a user with matching email and CPF exists, promotes them to organizer; otherwise creates a new user with a temporary password.
      */
     public function approve(OrganizerRequest $organizerRequest): JsonResponse
     {
@@ -84,23 +84,62 @@ class OrganizerRequestController extends Controller
             ], 422);
         }
 
-        if (User::query()
-            ->where(function ($query) use ($organizerRequest) {
-                $query->where('email', $organizerRequest->email)
-                    ->orWhere('cpf', $organizerRequest->cpf);
-            })
-            ->exists()) {
-            return response()->json([
-                'message' => __('A user with this email or CPF already exists. Resolve the conflict before approving.'),
-            ], 409);
-        }
-
         $role = Role::where('name', 'organizer')->first();
 
         if (! $role) {
             return response()->json([
                 'message' => __('Organizer role not configured.'),
             ], 500);
+        }
+
+        $byEmail = User::where('email', $organizerRequest->email)->first();
+        $byCpf = User::where('cpf', $organizerRequest->cpf)->first();
+
+        if ($byEmail && $byCpf && $byEmail->id !== $byCpf->id) {
+            return response()->json([
+                'message' => __('Another account already uses this email or CPF.'),
+            ], 409);
+        }
+
+        $user = $byEmail ?? $byCpf;
+
+        if ($user) {
+            $user->load('role');
+
+            if ($user->email !== $organizerRequest->email || $user->cpf !== $organizerRequest->cpf) {
+                return response()->json([
+                    'message' => __('The request data does not match the existing account.'),
+                ], 409);
+            }
+
+            if ($user->isRoot() || $user->isAdmin()) {
+                return response()->json([
+                    'message' => __('This user cannot be promoted to organizer through a request.'),
+                ], 422);
+            }
+
+            if (! $user->isOrganizer()) {
+                $user->id_role = $role->id;
+                $user->name = $organizerRequest->name;
+                $user->save();
+            }
+
+            $organizerRequest->update(['status' => 'approved']);
+            $user->refresh();
+            $user->load('role');
+
+            return response()->json([
+                'message' => __('Organizer request approved successfully.'),
+                'user' => [
+                    'id' => $user->id,
+                    'id_role' => $user->id_role,
+                    'role' => $user->role->name,
+                    'name' => $user->name,
+                    'cpf' => $user->cpf,
+                    'email' => $user->email,
+                ],
+                'existing_account' => true,
+            ]);
         }
 
         $temporaryPassword = Str::random(16);
@@ -127,6 +166,7 @@ class OrganizerRequestController extends Controller
                 'cpf' => $user->cpf,
                 'email' => $user->email,
             ],
+            'existing_account' => false,
             'temporary_password' => $temporaryPassword,
         ]);
     }
