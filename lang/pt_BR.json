@@ -50,5 +50,12 @@
     "This organizer request is no longer pending.": "Esta solicitação de organizador já não está pendente.",
     "This request is missing CPF or email and cannot be approved.": "Esta solicitação não possui CPF ou e-mail e não pode ser aprovada.",
     "Unauthorized. Only organizers can perform this action.": "Não autorizado. Apenas organizadores podem realizar esta ação.",
-    "User is not an organizer.": "O usuário não é um organizador."
+    "User is not an organizer.": "O usuário não é um organizador.",
+    "Your cart is empty.": "Seu carrinho está vazio.",
+    "Mercado Pago is not configured.": "O Mercado Pago não está configurado.",
+    "Could not create Mercado Pago checkout.": "Não foi possível criar o checkout do Mercado Pago.",
+    "Checkout created. Send the buyer to init_point (or sandbox_init_point in tests).": "Checkout criado. Envie o comprador para init_point (ou sandbox_init_point em testes).",
+    "Checkout finished with success redirect.": "Checkout finalizado com redirecionamento de sucesso.",
+    "Checkout finished with failure redirect.": "Checkout finalizado com redirecionamento de falha.",
+    "Checkout finished with pending redirect.": "Checkout finalizado com redirecionamento pendente."
 }
