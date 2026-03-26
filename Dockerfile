@@ -1,6 +1,15 @@
 # Stage 1: Composer
 FROM composer:2 AS composer
 WORKDIR /app
+
+# Needed for simplesoftwareio/simple-qrcode (ext-gd)
+RUN apk add --no-cache \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd
+
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 COPY . .
@@ -15,6 +24,9 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     postgresql-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
     zip \
     unzip \
     curl
@@ -23,6 +35,7 @@ RUN docker-php-ext-install \
     pdo \
     pdo_pgsql \
     pgsql \
+    gd \
     zip
 
 RUN { \
