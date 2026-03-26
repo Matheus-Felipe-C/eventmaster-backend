@@ -18,6 +18,7 @@ use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Http\Controllers\OrganizerRequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\UserTicketController;
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -95,6 +96,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::delete('/user', [AuthController::class, 'destroyAccount']);
 
+    // Tickets (authenticated user's tickets)
+    Route::get('/tickets', [UserTicketController::class, 'index']);
+
     // Cart (authenticated user's own cart)
     Route::apiResource('/cart', CartController::class)
         ->only(['index', 'store', 'update', 'destroy'])
@@ -107,3 +111,5 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', OrganizerOnly::class])->group(function (){
     Route::apiResource('staffs', StaffController::class);
 });
+
+Route::post('/tickets/validate', [UserTicketController::class, 'validateTicket']);
