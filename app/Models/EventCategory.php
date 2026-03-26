@@ -12,6 +12,9 @@ class EventCategory extends Model
      *
      * @var list<string>
      */
+
+    public $timestamps = false;
+    
     protected $fillable = [
         'name',
     ];
