@@ -40,6 +40,8 @@ class OrganizerController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'cpf' => ['required', 'string', 'max:14', 'unique:users,cpf'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone_number' => ['nullable', 'string', 'max:32'],
+            'reason' => ['nullable', 'string', 'max:2000'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -63,6 +65,8 @@ class OrganizerController extends Controller
             'name' => $request->name,
             'cpf' => $request->cpf,
             'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'reason' => $request->reason,
             'password' => Hash::make($request->password),
         ]);
 
@@ -77,6 +81,8 @@ class OrganizerController extends Controller
                 'name' => $user->name,
                 'cpf' => $user->cpf,
                 'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'reason' => $user->reason,
             ],
         ], 201);
     }
@@ -114,6 +120,8 @@ class OrganizerController extends Controller
                 'name' => $user->name,
                 'cpf' => $user->cpf,
                 'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'reason' => $user->reason,
             ],
         ]);
     }
@@ -151,6 +159,8 @@ class OrganizerController extends Controller
                 'name' => $user->name,
                 'cpf' => $user->cpf,
                 'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'reason' => $user->reason,
             ],
         ]);
     }

@@ -21,14 +21,7 @@ class UserController extends Controller
             ->paginate($request->integer('per_page', 15));
 
         $users->getCollection()->transform(function (User $user) {
-            return [
-                'id' => $user->id,
-                'id_role' => $user->id_role,
-                'role' => $user->role->name,
-                'name' => $user->name,
-                'cpf' => $user->cpf,
-                'email' => $user->email,
-            ];
+            return $user->makeHidden(['password', 'remember_token']);
         });
 
         return response()->json($users);
@@ -71,19 +64,13 @@ class UserController extends Controller
         ]);
 
         $user->load('role');
+        $user->makeHidden(['password', 'remember_token']);
 
         return response()->json([
             'message' => __('User created successfully.'),
-            'user' => [
-                'id' => $user->id,
-                'id_role' => $user->id_role,
-                'role' => $user->role->name,
-                'name' => $user->name,
-                'cpf' => $user->cpf,
-                'email' => $user->email,
-            ],
+            'user' => $user,
         ], 201);
-    }
+    }   
 
     /**
      * Update a user's role.
@@ -112,17 +99,11 @@ class UserController extends Controller
         $user->id_role = $role->id;
         $user->save();
         $user->load('role');
+        $user->makeHidden(['password', 'remember_token']);
 
         return response()->json([
             'message' => __('User role updated successfully.'),
-            'user' => [
-                'id' => $user->id,
-                'id_role' => $user->id_role,
-                'role' => $user->role->name,
-                'name' => $user->name,
-                'cpf' => $user->cpf,
-                'email' => $user->email,
-            ],
+            'user' => $user,
         ]);
     }
 
