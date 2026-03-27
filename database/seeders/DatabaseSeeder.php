@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             AdminUserSeeder::class,
+            DefaultUserSeeder::class,
+            DefaultOrganizerSeeder::class,
+            DefaultStaffSeeder::class,
             EventCategorySeeder::class,
             LocalSeeder::class,
             TicketTypeSeeder::class,

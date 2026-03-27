@@ -10,6 +10,24 @@ use Illuminate\Support\Facades\Validator;
 class LocalController extends Controller
 {
     /**
+     * Display a listing of locals.
+     */
+    public function index(): JsonResponse
+    {
+        $locals = Local::query()->orderBy('name')->get();
+
+        return response()->json($locals);
+    }
+
+    /**
+     * Display a specific local.
+     */
+    public function show(Local $local): JsonResponse
+    {
+        return response()->json($local);
+    }
+
+    /**
      * Store a newly created local.
      */
     public function store(Request $request): JsonResponse

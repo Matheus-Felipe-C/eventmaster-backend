@@ -30,6 +30,8 @@ Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']
 
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
+Route::get('/locals', [LocalController::class, 'index']);
+Route::get('/locals/{local}', [LocalController::class, 'show']);
 
 Route::post('/organizer-requests', [OrganizerRequestController::class, 'store']);
 
