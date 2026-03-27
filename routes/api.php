@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BatchController;
 use App\Http\Controllers\PasswordRecoveryController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\EventCategoryController;
@@ -20,10 +21,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\UserTicketController;
+use App\Http\Controllers\RefundController;
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
-
 
 Route::post('/recover-password', [PasswordRecoveryController::class, 'sendPasswordResetLink']);
 Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
@@ -83,7 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/organizer-requests/{organizerRequest}', [OrganizerRequestController::class, 'show']);
         Route::patch('/organizer-requests/{organizerRequest}/approve', [OrganizerRequestController::class, 'approve']);
         Route::patch('/organizer-requests/{organizerRequest}/reject', [OrganizerRequestController::class, 'reject']);
-    }); 
+        Route::post('/refunds', [RefundController::class, 'store']);
+    });
 
     // Organizer routes
     Route::middleware(OrganizerOnly::class)->group(function () {
@@ -91,7 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('/locals', LocalController::class)->only(['store']);
         Route::apiResource('/event-categories', EventCategoryController::class)->only(['store']);
     });
-    
+
     // Normal user routes
     Route::get('/user', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -99,6 +101,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Tickets (authenticated user's tickets)
     Route::get('/tickets', [UserTicketController::class, 'index']);
+    Route::get('/purchases', [UserTicketController::class, 'purchaseHistory']);
+    Route::get('/purchases/{purchase}', [UserTicketController::class, 'purchaseShow']);
+
+    // Batches
+    Route::post('/batches', [BatchController::class,'store']);
 
     // Cart (authenticated user's own cart)
     Route::apiResource('/cart', CartController::class)
@@ -115,4 +122,3 @@ Route::middleware(['auth:sanctum', OrganizerOnly::class])->group(function (){
 });
 
 Route::post('/tickets/validate', [UserTicketController::class, 'validateTicket']);
-

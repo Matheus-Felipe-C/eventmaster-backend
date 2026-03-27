@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,10 +26,21 @@ class StaffController extends Controller
             'email' => 'required|email|unique:users,email',
             'cpf' => 'required|string|unique:users,cpf',
             'password' => 'required|string|min:6',
-            'id_role' => 'required|exists:roles,id',
         ]);
 
-        $staff = User::create($validated);
+        $staffRole = Role::where('name', 'staff')->first();
+
+        if (! $staffRole) {
+            return response()->json(['message' => __('Staff role not configured.')], 500);
+        }
+
+        $staff = User::create([
+            ...$validated,
+            'id_role' => $staffRole->id,
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        $staff->load('role');
 
         return response()->json($staff, 201);
     }
@@ -44,7 +56,6 @@ class StaffController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|email|unique:users,email,' . $staff->id,
             'cpf' => 'sometimes|required|string|unique:users,cpf,' . $staff->id,
-            'id_role' => 'sometimes|required|exists:roles,id',
         ]);
 
         if ($request->has('password')) {
@@ -52,14 +63,26 @@ class StaffController extends Controller
         }
 
         $staff->update($validated);
+        $staff->load('role');
 
         return response()->json($staff, 200);
     }
 
     public function destroy(User $staff)
     {
-        $staff->deleteAccount(); 
+        $userRole = Role::where('name', 'user')->first();
 
-        return response()->json(['message' => 'Staff removido com sucesso.'], 200);
+        if (! $userRole) {
+            return response()->json(['message' => __('User role not configured.')], 500);
+        }
+
+        $staff->id_role = $userRole->id;
+        $staff->save();
+        $staff->load('role');
+
+        return response()->json([
+            'message' => __('Staff role removed successfully.'),
+            'user' => $staff,
+        ], 200);
     }
 }

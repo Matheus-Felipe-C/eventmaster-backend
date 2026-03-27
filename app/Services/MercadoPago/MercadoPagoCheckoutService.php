@@ -2,6 +2,7 @@
 
 namespace App\Services\MercadoPago;
 
+use App\Models\Batch;
 use App\Models\CartItem;
 use App\Models\MercadoPagoCheckoutSession;
 use App\Models\Ticket;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use MercadoPago\Client\Common\RequestOptions;
 use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Client\Payment\PaymentRefundClient;
 use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
@@ -219,7 +221,25 @@ class MercadoPagoCheckoutService
 
             $userId = (int) $session->id_user;
             $lines = $snapshot['lines'] ?? [];
-            $cartItemIds = $snapshot['cart_item_ids'] ?? [];
+
+            foreach ($lines as $line) {
+                $batchId = (int) $line['id_batch'];
+                $qty = (int) ($line['quantity'] ?? 0);
+                if ($qty < 1) {
+                    continue;
+                }
+
+                /** @var Batch|null $batch */
+                $batch = Batch::query()->whereKey($batchId)->lockForUpdate()->first();
+
+                if (! $batch || $batch->quantity < $qty) {
+                    $session->update(['status' => 'failed']);
+
+                    return;
+                }
+
+                $batch->decrement('quantity', $qty);
+            }
 
             foreach ($lines as $line) {
                 $batchId = (int) $line['id_batch'];
@@ -233,6 +253,7 @@ class MercadoPagoCheckoutService
                         'id_event' => (int) $line['id_event'],
                         'id_ticket_type' => (int) $line['id_ticket_type'],
                         'id_batch' => $batchId,
+                        'id_mercado_pago_checkout_session' => $session->id,
                         'status' => 'paid',
                         'seat_number' => $maxSeat,
                         'is_validated' => false,
@@ -240,18 +261,105 @@ class MercadoPagoCheckoutService
                 }
             }
 
-            if ($cartItemIds !== []) {
-                CartItem::query()
-                    ->where('id_user', $userId)
-                    ->whereIn('id', $cartItemIds)
-                    ->delete();
-            }
+            CartItem::query()->where('id_user', $userId)->delete();
 
             $session->update([
                 'status' => 'paid',
                 'payment_id' => $payment->id,
             ]);
         });
+    }
+
+    /**
+     * Full refund in Mercado Pago and reverse local fulfillment (batches + tickets).
+     *
+     * @return array{
+     *   already_refunded?: bool,
+     *   refund_id?: int|null,
+     *   session?: MercadoPagoCheckoutSession
+     * }
+     */
+    public function refundMercadoPagoPayment(int $paymentId, ?float $amount = null): array
+    {
+        $this->configureSdk();
+
+        /** @var MercadoPagoCheckoutSession|null $session */
+        $session = MercadoPagoCheckoutSession::query()
+            ->where('payment_id', $paymentId)
+            ->first();
+
+        if (! $session || $session->status !== 'paid') {
+            throw new \InvalidArgumentException(__('No paid checkout session found for this payment.'));
+        }
+
+        if ($session->refunded_at !== null) {
+            return [
+                'already_refunded' => true,
+                'session' => $session,
+            ];
+        }
+
+        $snapshot = $session->cart_snapshot;
+        $lines = $snapshot['lines'] ?? [];
+        $expectedTotal = (float) ($snapshot['total'] ?? 0);
+
+        if ($amount !== null && abs($amount - $expectedTotal) > 0.02) {
+            throw new \InvalidArgumentException(__('Only full refunds are supported for inventory reversal.'));
+        }
+
+        $expectedTicketCount = 0;
+        foreach ($lines as $line) {
+            $expectedTicketCount += (int) ($line['quantity'] ?? 0);
+        }
+
+        $linkedTickets = Ticket::query()
+            ->where('id_mercado_pago_checkout_session', $session->id);
+
+        if ($expectedTicketCount > 0 && $linkedTickets->clone()->count() !== $expectedTicketCount) {
+            throw new \InvalidArgumentException(__('Checkout tickets are not linked to this session; refund cannot be applied safely.'));
+        }
+
+        if ($linkedTickets->clone()->where('is_validated', true)->exists()) {
+            throw new \InvalidArgumentException(__('Cannot refund: at least one ticket was already used.'));
+        }
+
+        $refundClient = new PaymentRefundClient;
+        $refund = $refundClient->refundTotal($paymentId);
+
+        DB::transaction(function () use ($paymentId, $lines) {
+            /** @var MercadoPagoCheckoutSession|null $locked */
+            $locked = MercadoPagoCheckoutSession::query()
+                ->where('payment_id', $paymentId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $locked || $locked->refunded_at !== null) {
+                return;
+            }
+
+            foreach ($lines as $line) {
+                $batchId = (int) $line['id_batch'];
+                $qty = (int) ($line['quantity'] ?? 0);
+                if ($qty < 1) {
+                    continue;
+                }
+
+                /** @var Batch|null $batch */
+                $batch = Batch::query()->whereKey($batchId)->lockForUpdate()->first();
+                $batch?->increment('quantity', $qty);
+            }
+
+            Ticket::query()
+                ->where('id_mercado_pago_checkout_session', $locked->id)
+                ->update(['status' => 'cancelled']);
+
+            $locked->update(['refunded_at' => now()]);
+        });
+
+        return [
+            'refund_id' => $refund->id ?? null,
+            'session' => $session->fresh(),
+        ];
     }
 
     /**

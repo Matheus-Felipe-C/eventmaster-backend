@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MercadoPagoCheckoutSession;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,49 @@ class UserTicketController extends Controller
         $tickets = Ticket::where('id_user', $userId)->get();
 
         return TicketResource::collection($tickets);
+    }
+
+    /**
+     * List authenticated user's paid checkout sessions (past purchases).
+     */
+    public function purchaseHistory(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+
+        if (! $userId) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $sessions = MercadoPagoCheckoutSession::query()
+            ->where('id_user', $userId)
+            ->where('status', 'paid')
+            ->with([
+                'tickets.event',
+                'tickets.batch',
+                'tickets.ticketType',
+            ])
+            ->orderByDesc('created_at')
+            ->paginate($request->integer('per_page', 15));
+
+        return response()->json($sessions);
+    }
+
+    /**
+     * Show one authenticated user's paid checkout session (purchase details).
+     */
+    public function purchaseShow(Request $request, MercadoPagoCheckoutSession $purchase): JsonResponse
+    {
+        if ((int) $purchase->id_user !== (int) Auth::id() || $purchase->status !== 'paid') {
+            return response()->json(['message' => __('Record not found.')], 404);
+        }
+
+        $purchase->load([
+            'tickets.event',
+            'tickets.batch',
+            'tickets.ticketType',
+        ]);
+
+        return response()->json($purchase);
     }
 
     public function validateTicket(Request $request)

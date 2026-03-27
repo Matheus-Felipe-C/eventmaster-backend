@@ -146,6 +146,13 @@ class EventController extends Controller
      */
     public function update(Request $request, Event $event): JsonResponse
     {
+        if (is_string($request->input('batches'))) {
+            $decoded = json_decode($request->input('batches'), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $request->merge(['batches' => $decoded]);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
             'id_category' => ['sometimes', 'integer', 'exists:event_categories,id'],
             'id_local' => ['sometimes', 'integer', 'exists:locals,id'],
@@ -155,7 +162,39 @@ class EventController extends Controller
             'date' => ['sometimes', 'date'],
             'time' => ['sometimes', 'date_format:H:i'],
             'max_tickets_per_cpf' => ['sometimes', 'integer', 'min:0'],
+            'batches' => ['sometimes', 'array', 'min:1'],
+            'batches.*.price' => ['required', 'numeric', 'min:0'],
+            'batches.*.initial_date' => ['required', 'date'],
+            'batches.*.end_date' => ['required', 'date'],
+            'batches.*.quantity' => ['required', 'integer', 'min:0'],
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $batches = $request->input('batches');
+            if (! is_array($batches)) {
+                return;
+            }
+
+            foreach ($batches as $i => $batch) {
+                if (! is_array($batch)) {
+                    continue;
+                }
+
+                $initial = $batch['initial_date'] ?? null;
+                $end = $batch['end_date'] ?? null;
+                if (! $initial || ! $end) {
+                    continue;
+                }
+
+                try {
+                    if (Carbon::parse($end)->lt(Carbon::parse($initial))) {
+                        $validator->errors()->add("batches.$i.end_date", __('The end date must be after or equal to the initial date.'));
+                    }
+                } catch (\Throwable) {
+                    // Let the base date rules report invalid dates.
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json([
@@ -165,6 +204,8 @@ class EventController extends Controller
         }
 
         $eventData = $validator->validated();
+        $batchesData = $eventData['batches'] ?? null;
+        unset($eventData['batches']);
         unset($eventData['banner_image']);
 
         if ($request->hasFile('banner_image')) {
@@ -175,8 +216,18 @@ class EventController extends Controller
             $eventData['banner_image_url'] = Storage::disk('supabase')->url($bannerPath);
         }
 
-        $event->update($eventData);
-        $event->load(['category', 'local']);
+        DB::transaction(function () use ($event, $eventData, $batchesData) {
+            if (! empty($eventData)) {
+                $event->update($eventData);
+            }
+
+            if (is_array($batchesData) && count($batchesData) > 0) {
+                $event->batches()->createMany($batchesData);
+            }
+        });
+
+        $event->refresh();
+        $event->load(['category', 'local', 'batches']);
 
         return response()->json([
             'message' => __('Event updated successfully.'),
