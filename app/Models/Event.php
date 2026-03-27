@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Event extends Model
 {
+    use HasFactory;
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +24,9 @@ class Event extends Model
         'date',
         'time',
         'max_tickets_per_cpf',
+        'refund_enabled', 
+        'refund_deadline_hours', 
+        'refund_requires_approval'
     ];
 
     /**

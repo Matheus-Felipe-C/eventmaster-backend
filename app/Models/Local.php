@@ -12,6 +12,8 @@ class Local extends Model
      *
      * @var list<string>
      */
+  public $timestamps = false;
+
     protected $fillable = [
         'name',
         'street',
