@@ -19,6 +19,7 @@ use App\Http\Controllers\OrganizerRequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\UserTicketController;
+use App\Http\Controllers\RefundController;
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -82,6 +83,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/organizer-requests/{organizerRequest}', [OrganizerRequestController::class, 'show']);
         Route::patch('/organizer-requests/{organizerRequest}/approve', [OrganizerRequestController::class, 'approve']);
         Route::patch('/organizer-requests/{organizerRequest}/reject', [OrganizerRequestController::class, 'reject']);
+
+        Route::post('/refunds', [RefundController::class, 'store']);
     }); 
 
     // Organizer routes

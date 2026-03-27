@@ -16,6 +16,7 @@ class Ticket extends Model
         'id_event',
         'id_ticket_type',
         'id_batch',
+        'id_mercado_pago_checkout_session',
         'status',
         'seat_number',
         'is_validated',
@@ -51,6 +52,11 @@ class Ticket extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(Batch::class, 'id_batch');
+    }
+
+    public function mercadoPagoCheckoutSession(): BelongsTo
+    {
+        return $this->belongsTo(MercadoPagoCheckoutSession::class, 'id_mercado_pago_checkout_session');
     }
 
     public function checkins(): HasMany
