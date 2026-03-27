@@ -19,6 +19,8 @@ class Ticket extends Model
         'status',
         'seat_number',
         'is_validated',
+        'payment_id',
+        'id_checkout_session',
     ];
 
     protected $casts = [
@@ -56,5 +58,10 @@ class Ticket extends Model
     public function checkins(): HasMany
     {
         return $this->hasMany(Checkin::class, 'id_ticket');
+    }
+
+    public function refundRequests()
+    {
+        return $this->hasMany(RefundRequest::class, 'id_ticket');
     }
 }

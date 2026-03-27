@@ -19,6 +19,7 @@ use App\Http\Controllers\OrganizerRequestController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\UserTicketController;
+use App\Http\Controllers\RefundController;
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -113,3 +114,15 @@ Route::middleware(['auth:sanctum', OrganizerOnly::class])->group(function (){
 });
 
 Route::post('/tickets/validate', [UserTicketController::class, 'validateTicket']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Endpoints do Comprador 
+    Route::post('/refund-requests', [RefundController::class, 'store']);
+    Route::get('/refund-requests', [RefundController::class, 'index']);
+
+    // Endpoints do Organizador (Protegidos por Middleware de Organizer) 
+    Route::middleware('organizer')->group(function () {
+        Route::patch('/refund-requests/{id}/approve', [RefundController::class, 'approve']);
+        Route::patch('/refund-requests/{id}/reject', [RefundController::class, 'reject']);
+    });
+});
